@@ -11,15 +11,15 @@ export default {
     return apiClient.delete(`/stock/delete/${stockCode}`);
   },
   getStrategy(stockCode) {
-    return apiClient.get(`/strategy/${stockCode}`);
+    return apiClient.get(`/strategies/${stockCode}`);
   },
   updateStrategy(strategy) {
-    return apiClient.post('/strategy/update', strategy);
+    return apiClient.post('/strategies/update', strategy);
   },
   getNotifySettings() {
-    return apiClient.get('/user/notify/');
+    return apiClient.get('/notifications/settings');
   },
   updateNotifySettings(settings) {
-    return apiClient.post('/user/notify/update', settings);
+    return apiClient.post('/notifications/update', settings);
   }
 };

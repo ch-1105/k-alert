@@ -4,7 +4,7 @@ from app.core.database import init_db
 from app.core.scheduler import start_scheduler, add_job
 from app.services.scanner import scan_stocks
 from app.services.worker import process_alarms
-from app.api import stocks, strategies, notifications
+from app.api import stocks, strategies, notifications, test
 import threading
 
 app = FastAPI(title="Stock Monitor API")
@@ -20,8 +20,9 @@ app.add_middleware(
 
 # Include routers
 app.include_router(stocks.router, prefix="/api/stock", tags=["stocks"])
-app.include_router(strategies.router, prefix="/api/strategy", tags=["strategies"])
-app.include_router(notifications.router, prefix="/api/user/notify", tags=["notifications"])
+app.include_router(strategies.router, prefix="/api/strategies", tags=["strategies"])
+app.include_router(notifications.router, prefix="/api/notifications", tags=["notifications"])
+app.include_router(test.router, prefix="/api/test", tags=["test"])
 
 @app.on_event("startup")
 def startup_event():

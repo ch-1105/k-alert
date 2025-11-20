@@ -17,6 +17,11 @@ def get_notify(db: Session = Depends(get_db)):
         return {}
     return notify
 
+@router.get("/settings")
+def get_notify_settings(db: Session = Depends(get_db)):
+    """Alias for get_notify for better API semantics"""
+    return get_notify(db)
+
 @router.post("/update")
 def update_notify(notify: NotifyUpdate, db: Session = Depends(get_db)):
     db_notify = db.query(UserNotify).filter(UserNotify.user_id == 1).first()

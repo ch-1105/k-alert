@@ -75,21 +75,25 @@ class MarketDataService:
             logger.info(f"Fetching history for {stock_code} ({stock_type}), period: {period}")
             df = None
             
+            # SIMPLIFIED LOGIC: Try standard stock API first, then ETF if it fails or if requested
+            # This mimics the "old" behavior where we might have just tried one.
+            
             if stock_type == "etf":
-                if period in ["daily", "weekly", "monthly"]:
-                    df = ak.fund_etf_hist_em(symbol=stock_code, period=period, adjust="qfq")
-                elif period in ["30", "60"]:
-                    df = ak.fund_etf_hist_min_em(symbol=stock_code, period=period, adjust="qfq")
-                else:
-                    df = ak.fund_etf_hist_em(symbol=stock_code, period="daily", adjust="qfq")
-            else:
-                # Default to stock
+                try:
+                    if period in ["daily", "weekly", "monthly"]:
+                        df = ak.fund_etf_hist_em(symbol=stock_code, period=period, adjust="qfq")
+                    else:
+                        df = ak.fund_etf_hist_min_em(symbol=stock_code, period=period, adjust="qfq")
+                except Exception as e:
+                    logger.warning(f"ETF fetch failed for {stock_code}: {e}")
+            
+            if df is None or df.empty:
+                # Fallback or Primary for Stock
                 if period in ["daily", "weekly", "monthly"]:
                     df = ak.stock_zh_a_hist(symbol=stock_code, period=period, adjust="qfq")
-                elif period in ["30", "60"]:
-                    df = ak.stock_zh_a_hist_min_em(symbol=stock_code, period=period, adjust="qfq")
                 else:
-                    df = ak.stock_zh_a_hist(symbol=stock_code, period="daily", adjust="qfq")
+                    # Ensure period is string '30', '60'
+                    df = ak.stock_zh_a_hist_min_em(symbol=stock_code, period=str(period), adjust="qfq")
 
             return df
         except Exception as e:
