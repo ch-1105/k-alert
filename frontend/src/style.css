@@ -1,0 +1,115 @@
+:root {
+  --bg-color: #1a1a1a;
+  --text-color: #e5e5e5;
+  --primary-color: #409eff;
+  --secondary-color: #67c23a;
+  --danger-color: #f56c6c;
+  --card-bg: #252525;
+  --border-color: #363636;
+  --nav-bg: #252525;
+  
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  line-height: 1.6;
+  font-weight: 400;
+
+  color-scheme: dark;
+  color: var(--text-color);
+  background-color: var(--bg-color);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: var(--bg-color);
+}
+
+#app {
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+}
+
+/* Element Plus Overrides for Dark Theme */
+.el-header {
+  background-color: var(--nav-bg);
+  border-bottom: 1px solid var(--border-color);
+  padding: 0 !important;
+}
+
+.el-menu {
+  border-bottom: none !important;
+  background-color: transparent !important;
+}
+
+.el-menu-item {
+  color: var(--text-color) !important;
+}
+
+.el-menu-item.is-active {
+  color: var(--primary-color) !important;
+  border-bottom: 2px solid var(--primary-color) !important;
+}
+
+.el-menu-item:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.el-card {
+  background-color: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-color) !important;
+  margin-bottom: 20px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.el-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.el-dialog {
+  background-color: var(--card-bg) !important;
+}
+
+.el-dialog__title {
+  color: var(--text-color) !important;
+}
+
+.el-input__wrapper {
+  background-color: #1e1e1e !important;
+  box-shadow: 0 0 0 1px var(--border-color) inset !important;
+}
+
+.el-table {
+  --el-table-bg-color: var(--card-bg) !important;
+  --el-table-tr-bg-color: var(--card-bg) !important;
+  --el-table-header-bg-color: #2c2c2c !important;
+  --el-table-border-color: var(--border-color) !important;
+  color: var(--text-color) !important;
+}
+
+.el-table th, .el-table tr {
+  background-color: var(--card-bg) !important;
+}
+
+.el-table--enable-row-hover .el-table__body tr:hover > td {
+  background-color: #333 !important;
+}
+
+h1, h2, h3 {
+  color: var(--text-color);
+  font-weight: 600;
+}
+
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}

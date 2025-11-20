@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+sqlalchemy
+pydantic
+pydantic-settings
+akshare
+pandas
+pandas_ta
+apscheduler
+redis
+requests
+python-dotenv
+aiosmtplib
