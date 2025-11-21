@@ -10,7 +10,6 @@
       <el-select v-model="form.rsi_period" placeholder="Select Period">
         <el-option label="30 Minutes" value="30" />
         <el-option label="60 Minutes" value="60" />
-        <el-option label="4 Hours" value="4h" />
         <el-option label="Daily" value="daily" />
       </el-select>
     </el-form-item>

@@ -13,6 +13,7 @@ def process_alarms():
         while True:
             alarm = alarm_queue.pop_alarm()
             if not alarm:
+                time.sleep(1) # Wait 1s before next poll (prevents busy loop if Redis is down)
                 continue
             
             print(f"Processing alarm: {alarm}")
@@ -20,23 +21,28 @@ def process_alarms():
             user_id = alarm.get("user_id")
             notify_settings = db.query(UserNotify).filter_by(user_id=user_id).first()
             
-            if notify_settings:
-                message = f"Stock Alert: {alarm['stock_name']} ({alarm['stock_code']})\n" \
-                          f"Reason: {alarm['reason']}\n" \
-                          f"Value: {alarm['value']:.2f}\n" \
-                          f"Price: {alarm['price']}\n" \
-                          f"Time: {alarm['time']}"
-                
-                if notify_settings.email:
-                    NotificationService.send_email(notify_settings.email, "Stock Alert", message)
-                
-                if notify_settings.telegram_id:
-                    NotificationService.send_telegram(notify_settings.telegram_id, message)
-                elif settings.TELEGRAM_CHAT_ID:
-                    # Fallback to global chat_id from env
-                    NotificationService.send_telegram(settings.TELEGRAM_CHAT_ID, message)
+            # Prepare message
+            message = f"Stock Alert: {alarm['stock_name']} ({alarm['stock_code']})\n" \
+                      f"Reason: {alarm['reason']}\n" \
+                      f"Value: {alarm['value']:.2f}\n" \
+                      f"Price: {alarm['price']}\n" \
+                      f"Time: {alarm['time']}"
+
+            # 1. Telegram Notification
+            tg_id = None
+            if notify_settings and notify_settings.telegram_id:
+                tg_id = notify_settings.telegram_id
+            elif settings.TELEGRAM_CHAT_ID:
+                tg_id = settings.TELEGRAM_CHAT_ID
+            
+            if tg_id:
+                NotificationService.send_telegram(tg_id, message)
             else:
-                print(f"No notify settings for user {user_id}")
+                print(f"No Telegram ID configured for user {user_id} or global fallback")
+
+            # 2. Email Notification
+            if notify_settings and notify_settings.email:
+                NotificationService.send_email(notify_settings.email, "Stock Alert", message)
             
     except Exception as e:
         print(f"Worker failed: {e}")

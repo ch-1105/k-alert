@@ -70,7 +70,21 @@ def scan_stocks():
                     logger.warning(f"Could not calculate RSI for {stock.stock_code}, skipping.")
                     continue
                     
-                logger.info(f"Stock: {stock.stock_code}, RSI: {rsi} (Length: {length})")
+                # Calculate change percent
+                change_pct = 0.0
+                try:
+                    # Determine column name
+                    close_col = 'close' if 'close' in df.columns else '收盘'
+                    
+                    if len(df) >= 2:
+                        current_close = float(df.iloc[-1][close_col])
+                        prev_close = float(df.iloc[-2][close_col])
+                        if prev_close != 0:
+                            change_pct = (current_close - prev_close) / prev_close * 100
+                except Exception as e:
+                    logger.warning(f"Failed to calculate change percent: {e}")
+
+                logger.info(f"Stock: {stock.stock_code}, RSI: {rsi:.2f} (Length: {length}), Change: {change_pct:+.2f}%")
 
                 # Check signal
                 signal = SignalEngine.check_rsi_threshold(rsi, strategy.rsi_low, strategy.rsi_high)

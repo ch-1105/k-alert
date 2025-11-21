@@ -1,0 +1,223 @@
+# ================= 编译产物（核心忽略）=================
+target/                  # Maven 编译输出目录
+build/                   # Gradle 编译输出目录
+*.class                  # 编译后的字节码文件
+*.jar                    # 打包后的 JAR 文件
+*.war                    # 打包后的 WAR 文件
+*.ear                    # 打包后的 EAR 文件
+*.so                     # 原生库文件
+*.dll                    # Windows 原生库
+*.dylib                  # Mac 原生库
+
+# ================= 构建工具相关 =================
+# Maven
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+
+# Gradle
+.gradle/                 # Gradle 缓存目录
+gradle-wrapper.jar
+!gradle-wrapper.properties  # 保留 wrapper 配置（方便团队统一 Gradle 版本）
+gradlew
+gradlew.bat
+!gradle/wrapper/gradle-wrapper.jar  # 若项目提交 wrapper，可取消注释
+
+# ================= IDE 配置（本地配置忽略）=================
+# IntelliJ IDEA
+.idea/                   # IDEA 项目配置目录
+*.iws
+*.iml
+*.ipr
+out/                     # IDEA 编译输出目录
+
+# Eclipse
+.classpath
+.project
+.settings/
+bin/                     # Eclipse 编译输出目录
+
+# VS Code
+.vscode/
+!.vscode/settings.json   # 可选：保留团队共享的设置（按需开启）
+!.vscode/extensions.json
+*.code-workspace
+
+# ================= 系统/临时文件 =================
+.DS_Store                # Mac 系统文件
+Thumbs.db                # Windows 系统文件
+*.log                    # 日志文件
+logs/                    # 日志目录
+tmp/                     # 临时文件目录
+temp/
+.cache/
+
+# ================= 敏感/环境配置 =================
+.env                     # 环境变量文件
+.env.*                   # 所有环境变量相关文件（除了示例文件）
+!.env.example            # 保留环境变量模板（供团队参考，无敏感信息）
+application-*.yml        # 本地配置文件（若使用 Spring Boot，按需调整）
+!.application.yml        # 保留默认配置模板
+config/                  # 本地配置目录
+
+# ================= 虚拟环境（核心忽略）=================
+venv/                    # 常用虚拟环境目录
+env/                     # 另一种常见虚拟环境目录
+.env/                    # Pipenv 虚拟环境
+.venv/                   # 轻量虚拟环境目录
+ENV/
+build/                   # 打包编译目录
+dist/                    # 打包输出目录
+*.egg-info/              # 鸡蛋包信息目录
+__pycache__/             # Python 编译缓存
+*.py[cod]                # 编译后的字节码文件
+*$py.class
+
+# ================= 依赖管理 =================
+Pipfile.lock             # Pipenv 依赖锁文件（可忽略，也可提交，看团队规范）
+poetry.lock              # Poetry 依赖锁文件（同上）
+requirements.txt         # 若使用 Pipenv/Poetry，可忽略（建议提交模板）
+!.requirements.example.txt  # 保留依赖模板
+*.whl                    # Python  wheel 包
+*.egg
+*.manifest
+
+# ================= 测试/覆盖率 =================
+.pytest_cache/           # Pytest 缓存
+.coverage                # 覆盖率报告文件
+coverage.xml
+htmlcov/                 # 覆盖率 HTML 报告目录
+.tox/                    # Tox 测试环境
+.nox/                    # Nox 测试环境
+.pylintrc                # 本地代码检查配置（可忽略，也可提交团队规范）
+.flake8                  # 本地代码风格配置
+
+# ================= IDE 配置 =================
+.idea/                   # PyCharm 项目配置
+.vscode/                 # VS Code 配置
+!.vscode/settings.json
+*.swp                    # Vim 临时文件
+*.swo
+*.swn
+
+# ================= 系统/临时文件 =================
+.DS_Store
+Thumbs.db
+*.log
+logs/
+tmp/
+
+.ipynb_checkpoints/      # Jupyter Notebook 检查点
+
+# ================= 敏感/环境配置 =================
+.env.local               # 本地环境变量
+.env.*.local             # 特定环境的本地变量
+!.env.example            # 保留环境变量模板
+*.env
+secrets.toml             # Poetry 敏感配置
+# ================= 依赖（核心忽略）=================
+node_modules/            # Node.js 依赖目录（体积大，无需提交）
+package-lock.json        # npm 依赖锁文件（可忽略，也可提交）
+yarn.lock                # yarn 依赖锁文件（同上）
+pnpm-lock.yaml           # pnpm 依赖锁文件
+.npm/                    # npm 缓存
+.pnpm-store/             # pnpm 缓存
+.yarn/                   # yarn 缓存
+
+# ================= 编译产物 =================
+dist/                    # Vite/Webpack 打包输出目录
+build/                   # 旧版 Vue CLI 打包目录
+dist-ssr/                # SSR 打包目录
+*.local                  # 本地构建产物
+
+# ================= 环境配置（核心敏感）=================
+.env.local               # 本地环境变量（必忽略，含敏感信息）
+.env.development.local    # 开发环境本地变量
+.env.production.local     # 生产环境本地变量
+.env.test.local           # 测试环境本地变量
+!.env.example            # 保留环境变量模板（无敏感信息）
+
+# ================= 测试/覆盖率 =================
+coverage/                # 测试覆盖率报告
+cypress/videos/          # Cypress 测试视频
+cypress/screenshots/     # Cypress 测试截图
+.test-vars               # 测试变量文件
+
+# ================= IDE/工具配置 =================
+.idea/                   # IDEA 配置
+
+!.vscode/tasks.json
+*.swp
+
+
+# ================= 系统/日志文件 =================
+
+npm-debug.log*           # npm 错误日志
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ================= 缓存/其他 =================
+.eslintcache             # ESLint 缓存
+.prettiercache           # Prettier 缓存
+.vuepress/dist/          # VuePress 静态站点输出
+.tmp/
+
+# ================= 通用规则 =================
+
+.env
+.env.*
+!.env.example
+
+# ================= Java 后端规则 =================
+target/
+build/
+*.class
+*.jar
+*.war
+*.ear
+.gradle/
+
+!gradle-wrapper.properties
+
+.idea/
+
+out/
+
+bin/
+
+# ================= Vue 前端规则 =================
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+dist/
+
+dist-ssr/
+.env.local
+.env.development.local
+.env.production.local
+.env.test.local
+coverage/
+cypress/videos/
+cypress/screenshots/
+.eslintcache
+.prettiercache
+npm-debug.log*
+
+# ================= Python （若项目含 Python 脚本）=================
+venv/
+env/
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
