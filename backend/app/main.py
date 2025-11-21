@@ -28,8 +28,8 @@ app.include_router(test.router, prefix="/api/test", tags=["test"])
 def startup_event():
     init_db()
     start_scheduler()
-    # Add scanner job (every 60 seconds)
-    add_job(scan_stocks, seconds=60, id="scan_stocks")
+    # Add scanner job (every 15 seconds with randomization in scanner)
+    add_job(scan_stocks, seconds=15, id="scan_stocks")
     
     # Start worker in a separate thread
     worker_thread = threading.Thread(target=process_alarms, daemon=True)

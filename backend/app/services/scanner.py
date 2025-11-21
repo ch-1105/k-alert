@@ -6,9 +6,29 @@ from app.core.database import SessionLocal
 from app.models import UserStock, UserStrategy
 from datetime import datetime
 from loguru import logger
+import time
+import random
+from app.services.trading_hours import TradingHours, get_market_status
 
 def scan_stocks():
     logger.info("Scanning stocks...")
+    
+    # Check if market is open - skip scanning during non-trading hours
+    if not TradingHours.is_trading_day():
+        logger.info(f"Skipping scan - Market is closed (Weekend/Holiday)")
+        return
+    
+    # For non-trading hours on trading days, still allow scanning with historical data
+    # but log the market status
+    market_status = get_market_status()
+    is_trading = TradingHours.is_trading_time()
+    
+    if not is_trading:
+        logger.info(
+            f"Market is currently {market_status}. "
+            f"Scanning will use historical data only (no real-time prices)."
+        )
+    
     db = SessionLocal()
     try:
         # Get all monitored stocks
@@ -56,6 +76,17 @@ def scan_stocks():
                 signal = SignalEngine.check_rsi_threshold(rsi, strategy.rsi_low, strategy.rsi_high)
                 
                 if signal:
+                    # Check cooldown
+                    if strategy.last_notify_time:
+                        # Calculate minutes since last notify
+                        diff = datetime.now() - strategy.last_notify_time
+                        minutes_since = diff.total_seconds() / 60
+                        
+                        cooldown = getattr(strategy, 'cooldown_period', 60)
+                        if minutes_since < cooldown:
+                            logger.info(f"Skipping alert for {stock.stock_code} due to cooldown ({minutes_since:.1f}/{cooldown}m)")
+                            continue
+                    
                     # Get real-time price for the alert
                     rt_data = MarketDataService.get_real_time_price(stock.stock_code, stock_type=stock.stock_type)
                     price = rt_data['price'] if rt_data else 0
@@ -73,10 +104,15 @@ def scan_stocks():
                     }
                     alarm_queue.push_alarm(alarm_data)
                     logger.info(f"Alarm pushed: {alarm_data}")
+                    
+                    # Update last notify time
+                    strategy.last_notify_time = datetime.now()
+                    db.commit()
                 
-                # Add delay to avoid rate limiting
-                import time
-                time.sleep(2)
+                # Add small delay to be nice to the API
+                # Reduced from 3-5s to 0.1-0.5s because we run every 15s globally
+                delay = random.uniform(0.1, 0.5)
+                time.sleep(delay)
             except Exception as e:
                 logger.error(f"Error scanning {stock.stock_code}: {e}")
                 continue

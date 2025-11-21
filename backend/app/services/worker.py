@@ -2,6 +2,7 @@ from app.core.queue import alarm_queue
 from app.services.notification import NotificationService
 from app.core.database import SessionLocal
 from app.models import UserNotify
+from app.core.config import settings
 import time
 
 def process_alarms():
@@ -31,6 +32,9 @@ def process_alarms():
                 
                 if notify_settings.telegram_id:
                     NotificationService.send_telegram(notify_settings.telegram_id, message)
+                elif settings.TELEGRAM_CHAT_ID:
+                    # Fallback to global chat_id from env
+                    NotificationService.send_telegram(settings.TELEGRAM_CHAT_ID, message)
             else:
                 print(f"No notify settings for user {user_id}")
             
