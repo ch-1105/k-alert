@@ -13,13 +13,23 @@ class StrategyUpdate(BaseModel):
     rsi_period: str = "daily"
     rsi_length: int = 14
     enable_push: bool
+    enable_trend_filter: bool = False
+    enable_volatility_filter: bool = False
 
 @router.get("/{stock_code}")
 def get_strategy(stock_code: str, db: Session = Depends(get_db)):
     strategy = db.query(UserStrategy).filter(UserStrategy.stock_code == stock_code).first()
     if not strategy:
         # Return default
-        return {"rsi_low": 30, "rsi_high": 70, "rsi_period": "daily", "rsi_length": 14, "enable_push": True}
+        return {
+            "rsi_low": 30, 
+            "rsi_high": 70, 
+            "rsi_period": "daily", 
+            "rsi_length": 14, 
+            "enable_push": True,
+            "enable_trend_filter": False,
+            "enable_volatility_filter": False
+        }
     return strategy
 
 @router.post("/update")
@@ -32,7 +42,9 @@ def update_strategy(strategy: StrategyUpdate, db: Session = Depends(get_db)):
             rsi_high=strategy.rsi_high,
             rsi_period=strategy.rsi_period,
             rsi_length=strategy.rsi_length,
-            enable_push=strategy.enable_push
+            enable_push=strategy.enable_push,
+            enable_trend_filter=strategy.enable_trend_filter,
+            enable_volatility_filter=strategy.enable_volatility_filter
         )
         db.add(db_strategy)
     else:
@@ -41,6 +53,8 @@ def update_strategy(strategy: StrategyUpdate, db: Session = Depends(get_db)):
         db_strategy.rsi_period = strategy.rsi_period
         db_strategy.rsi_length = strategy.rsi_length
         db_strategy.enable_push = strategy.enable_push
+        db_strategy.enable_trend_filter = strategy.enable_trend_filter
+        db_strategy.enable_volatility_filter = strategy.enable_volatility_filter
     
     db.commit()
     return {"status": "ok"}

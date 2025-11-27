@@ -87,32 +87,37 @@ def scan_stocks():
                 logger.info(f"Stock: {stock.stock_code}, RSI: {rsi:.2f} (Length: {length}), Change: {change_pct:+.2f}%")
 
                 # Check signal
-                signal = SignalEngine.check_rsi_threshold(rsi, strategy.rsi_low, strategy.rsi_high)
+                # Pass the strategy object to check_signal
+                signal_result = SignalEngine.check_signal(df, strategy)
                 
-                if signal:
+                if signal_result and signal_result['triggered']:
                     # Check cooldown
                     if strategy.last_notify_time:
                         # Calculate minutes since last notify
                         diff = datetime.now() - strategy.last_notify_time
                         minutes_since = diff.total_seconds() / 60
                         
-                        cooldown = getattr(strategy, 'cooldown_period', 60)
+                        cooldown = getattr(strategy, 'cooldown_period', 30)
                         if minutes_since < cooldown:
                             logger.info(f"Skipping alert for {stock.stock_code} due to cooldown ({minutes_since:.1f}/{cooldown}m)")
                             continue
                     
-                    # Get real-time price for the alert
-                    rt_data = MarketDataService.get_real_time_price(stock.stock_code, stock_type=stock.stock_type)
-                    price = rt_data['price'] if rt_data else 0
+                    # Get real-time price for the alert (or use price from signal result)
+                    price = signal_result.get('price', 0)
+                    if price == 0:
+                        rt_data = MarketDataService.get_real_time_price(stock.stock_code, stock_type=stock.stock_type)
+                        price = rt_data['price'] if rt_data else 0
                     
                     # Push to queue
                     alarm_data = {
                         "user_id": stock.user_id,
                         "stock_code": stock.stock_code,
                         "stock_name": stock.stock_name,
-                        "reason": f"RSI {signal}",
-                        "value": rsi,
-                        "threshold": strategy.rsi_low if signal == "buy" else strategy.rsi_high,
+                        "reason": signal_result['reason'],
+                        "detail": signal_result['detail'],
+                        "trend": signal_result['trend'],
+                        "value": signal_result['rsi'],
+                        "threshold": strategy.rsi_low if signal_result['signal_type'] == "buy" else strategy.rsi_high,
                         "price": price,
                         "time": datetime.now().isoformat()
                     }

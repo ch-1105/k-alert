@@ -25,8 +25,10 @@ class UserStrategy(Base):
     rsi_period = Column(String, default="daily") # daily, 60, 30, 4h
     rsi_length = Column(Integer, default=14)
     enable_push = Column(Boolean, default=True)
+    enable_trend_filter = Column(Boolean, default=False)
+    enable_volatility_filter = Column(Boolean, default=False)
     last_notify_time = Column(DateTime, nullable=True)
-    cooldown_period = Column(Integer, default=60) # minutes
+    cooldown_period = Column(Integer, default=30) # minutes
     
 class UserNotify(Base):
     __tablename__ = "user_notifies"
