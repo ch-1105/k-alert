@@ -145,7 +145,20 @@ class MarketDataService:
         try:
             if period in ["daily", "weekly", "monthly"]:
                 # For daily data, use stock_zh_a_daily
-                df = ak.stock_zh_a_daily(symbol=symbol)
+                try:
+                    df = ak.stock_zh_a_daily(symbol=symbol)
+                except Exception as e:
+                    # Fallback for ETFs if Sina API fails
+                    if stock_type == "etf":
+                        # logger.warning(f"Sina API failed for ETF {stock_code}, trying EastMoney fallback: {e}")
+                        try:
+                            df = ak.fund_etf_hist_em(symbol=stock_code, period=period, adjust="qfq")
+                        except Exception as e2:
+                            logger.error(f"EastMoney fallback also failed for {stock_code}: {e2}")
+                            raise e
+                    else:
+                        raise e
+
             elif str(period) in ["1", "5", "15", "30", "60"]:
                 # For minute data: 1, 5, 15, 30, 60
                 # Ensure period is string

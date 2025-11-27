@@ -35,4 +35,4 @@ class UserNotify(Base):
     user_id = Column(Integer, index=True, default=1)
     telegram_id = Column(String, nullable=True)
     email = Column(String, nullable=True)
-    notify_rate_limit = Column(Integer, default=60) # seconds
+    notify_rate_limit = Column(Integer, default=30) # seconds
