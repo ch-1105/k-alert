@@ -148,16 +148,15 @@ class MarketDataService:
                 try:
                     df = ak.stock_zh_a_daily(symbol=symbol)
                 except Exception as e:
-                    # Fallback for ETFs if Sina API fails
-                    if stock_type == "etf":
-                        # logger.warning(f"Sina API failed for ETF {stock_code}, trying EastMoney fallback: {e}")
-                        try:
-                            df = ak.fund_etf_hist_em(symbol=stock_code, period=period, adjust="qfq")
-                        except Exception as e2:
-                            logger.error(f"EastMoney fallback also failed for {stock_code}: {e2}")
-                            raise e
-                    else:
-                        raise e
+                    # Always try ETF fallback, regardless of stock_type
+                    # This handles edge cases like commodity ETFs that fail with stock API
+                    logger.warning(f"Stock API failed for {stock_code}, trying ETF fallback: {str(e)[:50]}")
+                    try:
+                        df = ak.fund_etf_hist_em(symbol=stock_code, period=period, adjust="qfq")
+                        logger.info(f"✓ ETF fallback successful for {stock_code}")
+                    except Exception as e2:
+                        logger.error(f"Both APIs failed for {stock_code}. Stock API: {str(e)[:50]}, ETF API: {str(e2)[:50]}")
+                        raise e  # Raise original error
 
             elif str(period) in ["1", "5", "15", "30", "60"]:
                 # For minute data: 1, 5, 15, 30, 60
