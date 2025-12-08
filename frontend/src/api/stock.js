@@ -21,5 +21,8 @@ export default {
   },
   updateNotifySettings(settings) {
     return apiClient.post('/notifications/update', settings);
+  },
+  getStockMetrics(stockCode) {
+    return apiClient.get(`/stock/metrics/${stockCode}`);
   }
 };
