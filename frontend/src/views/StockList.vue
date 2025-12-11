@@ -36,7 +36,7 @@
           <div v-else-if="metrics[stock.stock_code]" class="metrics-container">
             <div class="price-row">
               <span class="price" :class="getPriceClass(metrics[stock.stock_code].change_percent)">
-                ¥{{ metrics[stock.stock_code].price.toFixed(2) }}
+                ¥{{ metrics[stock.stock_code].price.toFixed(4) }}
               </span>
               <span class="change" :class="getChangeClass(metrics[stock.stock_code].change_percent)">
                 {{ formatChange(metrics[stock.stock_code].change_percent) }}

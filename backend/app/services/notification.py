@@ -49,7 +49,7 @@ class NotificationService:
                 "chat_id": chat_id,
                 "text": message
             }
-            resp = requests.post(url, json=payload, timeout=10)
+            resp = requests.post(url, json=payload, timeout=200)
             if resp.status_code == 200:
                 logger.success(f"Telegram sent to {chat_id}")
                 return True
