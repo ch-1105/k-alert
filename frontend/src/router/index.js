@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import StockList from '../views/StockList.vue'
 import NotificationSettings from '../views/NotificationSettings.vue'
+import StockChart from '../views/StockChart.vue'
 
 const routes = [
   {
@@ -12,6 +13,11 @@ const routes = [
     path: '/notify',
     name: 'NotificationSettings',
     component: NotificationSettings
+  },
+  {
+    path: '/chart/:stockCode',
+    name: 'StockChart',
+    component: StockChart
   }
 ]
 

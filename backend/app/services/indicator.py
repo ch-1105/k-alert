@@ -108,3 +108,62 @@ class IndicatorService:
             "mid": float(last_row.iloc[1]),
             "upper": float(last_row.iloc[2])
         }
+
+    @staticmethod
+    def calculate_ma_series(df: pd.DataFrame, length: int = 60) -> pd.Series:
+        """
+        Calculate Moving Average and return the full Series.
+        """
+        if '收盘' in df.columns:
+            close = df['收盘']
+        elif 'close' in df.columns:
+            close = df['close']
+        else:
+            return pd.Series()
+            
+        close = pd.to_numeric(close, errors='coerce')
+        ma = ta.sma(close, length=length)
+        return ma if ma is not None else pd.Series()
+
+    @staticmethod
+    def calculate_bollinger_bands_series(df: pd.DataFrame, length: int = 20, std: float = 2.0):
+        """
+        Calculate Bollinger Bands and return the full DataFrame.
+        """
+        if '收盘' in df.columns:
+            close = df['收盘']
+        elif 'close' in df.columns:
+            close = df['close']
+        else:
+            return None
+            
+        close = pd.to_numeric(close, errors='coerce')
+        bb = ta.bbands(close, length=length, std=std)
+        return bb
+
+    @staticmethod
+    def calculate_macd_series(df: pd.DataFrame, fast: int = 12, slow: int = 26, signal: int = 9):
+        """
+        Calculate MACD and return dict with Series for 'macd', 'signal', 'histogram'.
+        """
+        if '收盘' in df.columns:
+            close = df['收盘']
+        elif 'close' in df.columns:
+            close = df['close']
+        else:
+            return None
+        
+        close = pd.to_numeric(close, errors='coerce')
+        macd_df = ta.macd(close, fast=fast, slow=slow, signal=signal)
+        
+        if macd_df is None or macd_df.empty:
+            return None
+        
+        # macd returns DataFrame with columns: MACD_12_26_9, MACDh_12_26_9, MACDs_12_26_9
+        # Extract as: macd line, histogram, signal line
+        return {
+            'macd': macd_df.iloc[:, 0],      # MACD line
+            'histogram': macd_df.iloc[:, 1], # Histogram
+            'signal': macd_df.iloc[:, 2]     # Signal line
+        }
+

@@ -142,24 +142,14 @@
         @saved="strategyDialogVisible = false"
       />
     </el-dialog>
-
-    <!-- Chart Analysis Dialog -->
-    <el-dialog
-      v-model="chartDialogVisible"
-      :title="`Analysis: ${currentStock}`"
-      width="1000px"
-      top="5vh"
-    >
-      <StockKLine v-if="chartDialogVisible" :stock-code="currentStock" />
-    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
 import api from "../api/stock";
 import StrategySettings from "./StrategySettings.vue";
-import StockKLine from "../components/StockKLine.vue";
 import { ElMessage } from "element-plus";
 import {
   Plus,
@@ -170,11 +160,12 @@ import {
   TrendCharts,
 } from "@element-plus/icons-vue";
 
+const router = useRouter();
+
 const stocks = ref([]);
 const form = ref({ stock_code: "", stock_name: "", stock_type: "stock" });
 const addDialogVisible = ref(false);
 const strategyDialogVisible = ref(false);
-const chartDialogVisible = ref(false);
 const currentStock = ref("");
 const loading = ref(false);
 const metrics = ref({}); // Store metrics for each stock
@@ -224,7 +215,7 @@ const getChangeClass = (changePercent) => {
 
 const formatChange = (changePercent) => {
   const sign = changePercent >= 0 ? "↑" : "↓";
-  return `${sign}${Math.abs(changePercent).toFixed(2)}%`;
+  return `${Math.abs(changePercent).toFixed(2)}%`;
 };
 
 const getRsiClass = (rsi) => {
@@ -274,8 +265,7 @@ const handleEdit = (row) => {
 };
 
 const handleChart = (row) => {
-  currentStock.value = row.stock_code;
-  chartDialogVisible.value = true;
+  router.push(`/chart/${row.stock_code}`);
 };
 
 onMounted(loadStocks);

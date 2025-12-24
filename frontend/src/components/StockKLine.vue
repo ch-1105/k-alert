@@ -47,7 +47,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue'
-import { createChart, CandlestickSeries } from 'lightweight-charts'
+import { createChart, CandlestickSeries, createSeriesMarkers } from 'lightweight-charts'
 import api from '../api/stock'
 
 const props = defineProps({
@@ -59,6 +59,7 @@ const chartContainer = ref(null)
 // Use plain variables for chart instances to avoid Vue Proxy issues
 let chart = null
 let candlestickSeries = null
+let candlestickMarkers = null
 
 const rsiLower = ref(30)
 const rsiUpper = ref(70)
@@ -114,9 +115,13 @@ const loadData = async () => {
     if (candlestickSeries) {
         candlestickSeries.setData(klineData)
         if (markers && markers.length > 0) {
-            candlestickSeries.setMarkers(markers)
-        } else {
-            candlestickSeries.setMarkers([])
+            if (candlestickMarkers) {
+                candlestickMarkers.setMarkers(markers)
+            } else {
+                candlestickMarkers = createSeriesMarkers(candlestickSeries, markers)
+            }
+        } else if (candlestickMarkers) {
+            candlestickMarkers.setMarkers([])
         }
     }
   } catch (e) {
