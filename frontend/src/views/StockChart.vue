@@ -8,16 +8,29 @@
         <h2>{{ stockCode }} - {{ stockName }}</h2>
       </div>
       <div class="header-right">
-        <el-select v-model="period" placeholder="Period" style="width: 120px" @change="loadData">
-          <el-option label="1分钟" value="1" />
-          <el-option label="5分钟" value="5" />
-          <el-option label="15分钟" value="15" />
-          <el-option label="30分钟" value="30" />
-          <el-option label="60分钟" value="60" />
-          <el-option label="日线" value="daily" />
-          <el-option label="周线" value="weekly" />
-          <el-option label="月线" value="monthly" />
-        </el-select>
+        <div class="controls-group">
+          <el-select v-model="period" placeholder="Period" style="width: 120px" @change="loadData">
+            <el-option label="1分钟" value="1" />
+            <el-option label="5分钟" value="5" />
+            <el-option label="15分钟" value="15" />
+            <el-option label="30分钟" value="30" />
+            <el-option label="60分钟" value="60" />
+            <el-option label="日线" value="daily" />
+            <el-option label="周线" value="weekly" />
+            <el-option label="月线" value="monthly" />
+          </el-select>
+          
+          <el-divider direction="vertical" />
+          
+          <div class="indicator-toggles">
+            <span class="toggle-label">指标:</span>
+            <el-checkbox v-model="showMA" @change="toggleMA">MA</el-checkbox>
+            <el-checkbox v-model="showBOLL" @change="toggleBOLL">BOLL</el-checkbox>
+            <el-checkbox v-model="showVolume" @change="toggleVolume">成交量</el-checkbox>
+            <el-checkbox v-model="showRSI" @change="toggleRSI">RSI</el-checkbox>
+            <el-checkbox v-model="showMACD" @change="toggleMACD">MACD</el-checkbox>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -26,13 +39,13 @@
       <div class="main-chart" ref="mainChartContainer"></div>
       
       <!-- Volume Chart -->
-      <div class="volume-chart" ref="volumeChartContainer"></div>
+      <div v-show="showVolume" class="volume-chart" ref="volumeChartContainer"></div>
       
       <!-- RSI Chart -->
-      <div class="rsi-chart" ref="rsiChartContainer"></div>
+      <div v-show="showRSI" class="rsi-chart" ref="rsiChartContainer"></div>
       
       <!-- MACD Chart -->
-      <div class="macd-chart" ref="macdChartContainer"></div>
+      <div v-show="showMACD" class="macd-chart" ref="macdChartContainer"></div>
     </div>
 
     <div class="indicators-panel">
@@ -126,7 +139,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { createChart, CandlestickSeries, LineSeries, HistogramSeries, createSeriesMarkers } from 'lightweight-charts'
 import { ArrowLeft } from '@element-plus/icons-vue'
@@ -184,6 +197,13 @@ const currentIndicators = ref({
   boll_lower: null
 })
 
+// Indicator visibility toggles (RSI default on, others off)
+const showMA = ref(false)
+const showBOLL = ref(false)
+const showVolume = ref(false)
+const showRSI = ref(true)
+const showMACD = ref(false)
+
 const rsiLower = ref(30)
 const rsiUpper = ref(70)
 const backtestLoading = ref(false)
@@ -200,6 +220,53 @@ const getRsiClass = (rsi) => {
   if (rsi < 30) return 'rsi-low'
   if (rsi > 70) return 'rsi-high'
   return 'rsi-normal'
+}
+
+// Toggle functions
+const toggleMA = () => {
+  if (showMA.value) {
+    // Show MA lines
+    if (ma5Series) ma5Series.applyOptions({ visible: true })
+    if (ma10Series) ma10Series.applyOptions({ visible: true })
+    if (ma20Series) ma20Series.applyOptions({ visible: true })
+    if (ma60Series) ma60Series.applyOptions({ visible: true })
+  } else {
+    // Hide MA lines
+    if (ma5Series) ma5Series.applyOptions({ visible: false })
+    if (ma10Series) ma10Series.applyOptions({ visible: false })
+    if (ma20Series) ma20Series.applyOptions({ visible: false })
+    if (ma60Series) ma60Series.applyOptions({ visible: false })
+  }
+}
+
+const toggleBOLL = () => {
+  if (showBOLL.value) {
+    if (bollUpperSeries) bollUpperSeries.applyOptions({ visible: true })
+    if (bollMidSeries) bollMidSeries.applyOptions({ visible: true })
+    if (bollLowerSeries) bollLowerSeries.applyOptions({ visible: true })
+  } else {
+    if (bollUpperSeries) bollUpperSeries.applyOptions({ visible: false })
+    if (bollMidSeries) bollMidSeries.applyOptions({ visible: false })
+    if (bollLowerSeries) bollLowerSeries.applyOptions({ visible: false })
+  }
+}
+
+const toggleVolume = () => {
+  if (showVolume.value && volumeChart && volumeChartContainer.value) {
+    volumeChart.applyOptions({ width: volumeChartContainer.value.clientWidth })
+  }
+}
+
+const toggleRSI = () => {
+  if (showRSI.value && rsiChart && rsiChartContainer.value) {
+    rsiChart.applyOptions({ width: rsiChartContainer.value.clientWidth })
+  }
+}
+
+const toggleMACD = () => {
+  if (showMACD.value && macdChart && macdChartContainer.value) {
+    macdChart.applyOptions({ width: macdChartContainer.value.clientWidth })
+  }
 }
 
 const initCharts = () => {
@@ -230,45 +297,52 @@ const initCharts = () => {
       wickDownColor: '#26a69a',
     })
 
-    // MA lines
+    // MA lines (hidden by default)
     ma5Series = mainChart.addSeries(LineSeries, {
       color: '#FF6D00',
       lineWidth: 1,
-      title: 'MA5'
+      title: 'MA5',
+      visible: false
     })
     ma10Series = mainChart.addSeries(LineSeries, {
       color: '#2196F3',
       lineWidth: 1,
-      title: 'MA10'
+      title: 'MA10',
+      visible: false
     })
     ma20Series = mainChart.addSeries(LineSeries, {
       color: '#9C27B0',
       lineWidth: 1,
-      title: 'MA20'
+      title: 'MA20',
+      visible: false
     })
     ma60Series = mainChart.addSeries(LineSeries, {
       color: '#00BCD4',
       lineWidth: 1,
-      title: 'MA60'
+      title: 'MA60',
+      visible: false
     })
 
-    // BOLL bands
+    // BOLL bands (hidden by default)
     bollUpperSeries = mainChart.addSeries(LineSeries, {
       color: '#FFC107',
       lineWidth: 1,
       lineStyle: 2, // dashed
-      title: 'BOLL上'
+      title: 'BOLL上',
+      visible: false
     })
     bollMidSeries = mainChart.addSeries(LineSeries, {
       color: '#FFC107',
       lineWidth: 1,
-      title: 'BOLL中'
+      title: 'BOLL中',
+      visible: false
     })
     bollLowerSeries = mainChart.addSeries(LineSeries, {
       color: '#FFC107',
       lineWidth: 1,
       lineStyle: 2,
-      title: 'BOLL下'
+      title: 'BOLL下',
+      visible: false
     })
   }
 
@@ -365,9 +439,33 @@ const loadData = async () => {
 
     const data = res.data
 
+    // Update timeScale options based on period type
+    const isIntraday = ['1', '5', '15', '30', '60'].includes(period.value)
+    const timeScaleOptions = {
+      timeVisible: isIntraday,
+      secondsVisible: false
+    }
+    
+    if (mainChart) {
+      mainChart.applyOptions({
+        timeScale: timeScaleOptions
+      })
+    }
+    if (volumeChart) volumeChart.applyOptions({ timeScale: timeScaleOptions })
+    if (rsiChart) rsiChart.applyOptions({ timeScale: timeScaleOptions })
+    if (macdChart) macdChart.applyOptions({ timeScale: timeScaleOptions })
+
     // Set candlestick data
     if (candlestickSeries && data.kline) {
-      const klineData = data.kline.sort((a, b) => new Date(a.time) - new Date(b.time))
+      const klineData = data.kline.sort((a, b) => {
+        // For timestamps (intraday), compare numerically
+        // For date strings, compare as dates
+        if (typeof a.time === 'number') {
+          return a.time - b.time
+        }
+        return new Date(a.time) - new Date(b.time)
+      })
+      
       console.log('Setting kline data, count:', klineData.length)
       console.log('First kline:', klineData[0])
       console.log('Last kline:', klineData[klineData.length - 1])
@@ -386,6 +484,11 @@ const loadData = async () => {
       } else if (candlestickMarkers) {
         // Clear markers if none
         candlestickMarkers.setMarkers([])
+      }
+      
+      // Fit content after setting data
+      if (mainChart) {
+        mainChart.timeScale().fitContent()
       }
     }
 
@@ -411,6 +514,9 @@ const loadData = async () => {
       console.log('Setting volume, count:', data.volume.length)
       console.log('First volume item:', data.volume[0])
       volumeSeries.setData(data.volume)
+      if (volumeChart) {
+        volumeChart.timeScale().fitContent()
+      }
     }
 
     // Set RSI data
@@ -418,6 +524,9 @@ const loadData = async () => {
       console.log('Setting RSI, count:', data.rsi.length)
       console.log('First RSI item:', data.rsi[0])
       rsiSeries.setData(data.rsi)
+      if (rsiChart) {
+        rsiChart.timeScale().fitContent()
+      }
     }
 
     // Set MACD data
@@ -429,6 +538,9 @@ const loadData = async () => {
     if (data.macd_histogram && macdHistogramSeries) {
       console.log('Setting MACD histogram, count:', data.macd_histogram.length)
       macdHistogramSeries.setData(data.macd_histogram)
+      if (macdChart) {
+        macdChart.timeScale().fitContent()
+      }
     }
 
     // Update current indicators (last values)
@@ -496,6 +608,12 @@ onUnmounted(() => {
   if (macdChart) macdChart.remove()
   if (resizeObserver) resizeObserver.disconnect()
 })
+
+// Watch for period changes
+watch(() => period.value, (newPeriod, oldPeriod) => {
+  console.log(`Period changed from ${oldPeriod} to ${newPeriod}`)
+  loadData()
+})
 </script>
 
 <style scoped>
@@ -521,6 +639,29 @@ onUnmounted(() => {
 .header-left h2 {
   margin: 0;
   color: #fff;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
+.controls-group {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.indicator-toggles {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.toggle-label {
+  color: #888;
+  font-size: 0.9rem;
+  margin-right: 5px;
 }
 
 .chart-container {
