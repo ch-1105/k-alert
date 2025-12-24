@@ -24,6 +24,22 @@ class IndicatorService:
         return float(rsi.iloc[-1])
 
     @staticmethod
+    def calculate_rsi_series(df: pd.DataFrame, length: int = 6) -> pd.Series:
+        """
+        Calculate RSI and return the full Series.
+        """
+        if '收盘' in df.columns:
+            close = df['收盘']
+        elif 'close' in df.columns:
+            close = df['close']
+        else:
+            raise ValueError("DataFrame must contain 'close' or '收盘' column")
+            
+        close = pd.to_numeric(close, errors='coerce')
+        rsi = ta.rsi(close, length=length)
+        return rsi
+
+    @staticmethod
     def calculate_macd(df: pd.DataFrame, fast: int = 12, slow: int = 26, signal: int = 9):
         if '收盘' in df.columns:
             close = df['收盘']

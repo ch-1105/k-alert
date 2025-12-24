@@ -24,5 +24,11 @@ export default {
   },
   getStockMetrics(stockCode) {
     return apiClient.get(`/stock/metrics/${stockCode}`);
+  },
+  getKline(stockCode, period) {
+    return apiClient.get(`/stock/kline/${stockCode}`, { params: { period } });
+  },
+  runBacktest(data) {
+    return apiClient.post('/stock/backtest', data);
   }
 };
