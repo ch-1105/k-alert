@@ -34,7 +34,21 @@
       </div>
     </div>
 
-    <div class="chart-container">
+    <div class="chart-container" style="position: relative;">
+      <!-- Floating Legend for OHLCV -->
+      <div v-show="showLegend" class="chart-legend" :style="legendStyle">
+        <div class="legend-time">{{ hoverData.time }}</div>
+        <div class="legend-row">
+          <span class="label">开:</span><span class="value">{{ formatValue(hoverData.open) }}</span>
+          <span class="label">高:</span><span class="value up">{{ formatValue(hoverData.high) }}</span>
+          <span class="label">低:</span><span class="value down">{{ formatValue(hoverData.low) }}</span>
+          <span class="label">收:</span><span class="value" :class="getPriceClass(hoverData.close, hoverData.open)">{{ formatValue(hoverData.close) }}</span>
+        </div>
+        <div class="legend-row">
+          <span class="label">量:</span><span class="value">{{ formatVolume(hoverData.volume) }}</span>
+        </div>
+      </div>
+
       <!-- Main Chart -->
       <div class="main-chart" ref="mainChartContainer"></div>
       
@@ -153,6 +167,62 @@ const stockCode = computed(() => route.params.stockCode)
 const stockName = ref('')
 const period = ref('daily')
 
+// Tooltip/Legend state
+const showLegend = ref(false)
+const hoverData = ref({
+  time: '',
+  open: null,
+  high: null,
+  low: null,
+  close: null,
+  volume: null
+})
+const legendStyle = ref({
+  position: 'absolute',
+  left: '10px',
+  top: '10px',
+  zIndex: 10,
+  pointerEvents: 'none'
+})
+
+let hoverTimer = null
+const HOVER_DELAY = 100 // User's preferred small delay
+
+const formatChartTime = (time) => {
+  if (!time) return '--';
+  
+  if (typeof time === 'number') {
+    // Intraday: format with Shanghai time
+    return new Date(time * 1000).toLocaleString('zh-CN', {
+      timeZone: 'Asia/Shanghai',
+      hour12: false,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  } else if (typeof time === 'object' && time.year) {
+    // BusinessDay object: { year, month, day }
+    return `${time.year}-${String(time.month).padStart(2, '0')}-${String(time.day).padStart(2, '0')}`;
+  }
+  
+  // Already a string or other format
+  return String(time);
+};
+
+const formatValue = (val) => val ? val.toFixed(2) : '--'
+const formatVolume = (val) => {
+  if (!val) return '--'
+  if (val > 100000000) return (val / 100000000).toFixed(2) + '亿'
+  if (val > 10000) return (val / 10000).toFixed(2) + '万'
+  return val.toString()
+}
+const getPriceClass = (close, open) => {
+  if (!close || !open) return ''
+  return close >= open ? 'up' : 'down'
+}
+
 // Chart containers
 const mainChartContainer = ref(null)
 const volumeChartContainer = ref(null)
@@ -255,18 +325,21 @@ const toggleVolume = () => {
   if (showVolume.value && volumeChart && volumeChartContainer.value) {
     volumeChart.applyOptions({ width: volumeChartContainer.value.clientWidth })
   }
+  if (window.updateTimeScaleVisibility) window.updateTimeScaleVisibility()
 }
 
 const toggleRSI = () => {
   if (showRSI.value && rsiChart && rsiChartContainer.value) {
     rsiChart.applyOptions({ width: rsiChartContainer.value.clientWidth })
   }
+  if (window.updateTimeScaleVisibility) window.updateTimeScaleVisibility()
 }
 
 const toggleMACD = () => {
   if (showMACD.value && macdChart && macdChartContainer.value) {
     macdChart.applyOptions({ width: macdChartContainer.value.clientWidth })
   }
+  if (window.updateTimeScaleVisibility) window.updateTimeScaleVisibility()
 }
 
 const initCharts = () => {
@@ -279,7 +352,23 @@ const initCharts = () => {
       vertLines: { color: '#2B2B43' },
       horzLines: { color: '#2B2B43' },
     },
+    timeScale: {
+      borderColor: '#333',
+    },
+    rightPriceScale: {
+      borderColor: '#333',
+    },
+    crosshair: {
+      mode: 0, // CrosshairMode.Normal
+    },
+    localization: {
+      locale: 'zh-CN',
+      timeFormatter: formatChartTime
+    }
   }
+
+  // Create helper to define which charts are currently visible
+  const visibleCharts = []
 
   // Main chart
   if (mainChartContainer.value) {
@@ -287,7 +376,12 @@ const initCharts = () => {
       ...commonOptions,
       width: mainChartContainer.value.clientWidth,
       height: 400,
+      timeScale: {
+        ...commonOptions.timeScale,
+        visible: false, // Hide X axis for upper charts
+      }
     })
+    visibleCharts.push(mainChart)
 
     candlestickSeries = mainChart.addSeries(CandlestickSeries, {
       upColor: '#ef5350',
@@ -297,53 +391,15 @@ const initCharts = () => {
       wickDownColor: '#26a69a',
     })
 
-    // MA lines (hidden by default)
-    ma5Series = mainChart.addSeries(LineSeries, {
-      color: '#FF6D00',
-      lineWidth: 1,
-      title: 'MA5',
-      visible: false
-    })
-    ma10Series = mainChart.addSeries(LineSeries, {
-      color: '#2196F3',
-      lineWidth: 1,
-      title: 'MA10',
-      visible: false
-    })
-    ma20Series = mainChart.addSeries(LineSeries, {
-      color: '#9C27B0',
-      lineWidth: 1,
-      title: 'MA20',
-      visible: false
-    })
-    ma60Series = mainChart.addSeries(LineSeries, {
-      color: '#00BCD4',
-      lineWidth: 1,
-      title: 'MA60',
-      visible: false
-    })
-
-    // BOLL bands (hidden by default)
-    bollUpperSeries = mainChart.addSeries(LineSeries, {
-      color: '#FFC107',
-      lineWidth: 1,
-      lineStyle: 2, // dashed
-      title: 'BOLL上',
-      visible: false
-    })
-    bollMidSeries = mainChart.addSeries(LineSeries, {
-      color: '#FFC107',
-      lineWidth: 1,
-      title: 'BOLL中',
-      visible: false
-    })
-    bollLowerSeries = mainChart.addSeries(LineSeries, {
-      color: '#FFC107',
-      lineWidth: 1,
-      lineStyle: 2,
-      title: 'BOLL下',
-      visible: false
-    })
+    // ... MA and BOLL series remain same ...
+    // (keeping them for initialization)
+    ma5Series = mainChart.addSeries(LineSeries, { color: '#FF6D00', lineWidth: 1, title: 'MA5', visible: false })
+    ma10Series = mainChart.addSeries(LineSeries, { color: '#2196F3', lineWidth: 1, title: 'MA10', visible: false })
+    ma20Series = mainChart.addSeries(LineSeries, { color: '#9C27B0', lineWidth: 1, title: 'MA20', visible: false })
+    ma60Series = mainChart.addSeries(LineSeries, { color: '#00BCD4', lineWidth: 1, title: 'MA60', visible: false })
+    bollUpperSeries = mainChart.addSeries(LineSeries, { color: '#FFC107', lineWidth: 1, lineStyle: 2, title: 'BOLL上', visible: false })
+    bollMidSeries = mainChart.addSeries(LineSeries, { color: '#FFC107', lineWidth: 1, title: 'BOLL中', visible: false })
+    bollLowerSeries = mainChart.addSeries(LineSeries, { color: '#FFC107', lineWidth: 1, lineStyle: 2, title: 'BOLL下', visible: false })
   }
 
   // Volume chart
@@ -352,13 +408,16 @@ const initCharts = () => {
       ...commonOptions,
       width: volumeChartContainer.value.clientWidth,
       height: 120,
+      timeScale: {
+        ...commonOptions.timeScale,
+        visible: false,
+      }
     })
+    visibleCharts.push(volumeChart)
 
     volumeSeries = volumeChart.addSeries(HistogramSeries, {
       color: '#26a69a',
-      priceFormat: {
-        type: 'volume',
-      },
+      priceFormat: { type: 'volume' },
     })
   }
 
@@ -368,7 +427,12 @@ const initCharts = () => {
       ...commonOptions,
       width: rsiChartContainer.value.clientWidth,
       height: 120,
+      timeScale: {
+        ...commonOptions.timeScale,
+        visible: false,
+      }
     })
+    visibleCharts.push(rsiChart)
 
     rsiSeries = rsiChart.addSeries(LineSeries, {
       color: '#2196F3',
@@ -382,20 +446,108 @@ const initCharts = () => {
       ...commonOptions,
       width: macdChartContainer.value.clientWidth,
       height: 120,
+      // MACD is at the bottom by default, but we should make sure the bottom-most visible chart has the timeScale visible
+      // We will handle this dynamically in updateTimeScaleVisibility
     })
+    visibleCharts.push(macdChart)
 
-    macdHistogramSeries = macdChart.addSeries(HistogramSeries, {
-      color: '#26a69a',
-    })
-    macdSeries = macdChart.addSeries(LineSeries, {
-      color: '#2196F3',
-      lineWidth: 1,
-    })
-    macdSignalSeries = macdChart.addSeries(LineSeries, {
-      color: '#ef5350',
-      lineWidth: 1,
+    macdHistogramSeries = macdChart.addSeries(HistogramSeries, { color: '#26a69a' })
+    macdSeries = macdChart.addSeries(LineSeries, { color: '#2196F3', lineWidth: 1 })
+    macdSignalSeries = macdChart.addSeries(LineSeries, { color: '#ef5350', lineWidth: 1 })
+  }
+
+  // Function to ensure only the bottom-most chart shows the time scale
+  const updateTimeScaleVisibility = () => {
+    // Collect all chart objects that correspond to visible containers
+    const activeCharts = []
+    if (mainChart) activeCharts.push({ chart: mainChart, visible: true }) // Main is always visible
+    if (volumeChart) activeCharts.push({ chart: volumeChart, visible: showVolume.value })
+    if (rsiChart) activeCharts.push({ chart: rsiChart, visible: showRSI.value })
+    if (macdChart) activeCharts.push({ chart: macdChart, visible: showMACD.value })
+
+    const lastVisible = activeCharts.filter(item => item.visible).pop()
+    
+    activeCharts.forEach(item => {
+      item.chart.applyOptions({
+        timeScale: { visible: item === lastVisible }
+      })
     })
   }
+
+  // Update visibility on initial load and toggles
+  updateTimeScaleVisibility()
+
+  // Export functions to use in toggles
+  window.updateTimeScaleVisibility = updateTimeScaleVisibility
+
+
+  // Synchronize all charts
+  const charts = [mainChart, volumeChart, rsiChart, macdChart].filter(c => c !== null)
+  let isSyncingHorizontal = false
+
+  charts.forEach(chart => {
+    // 1. Sync TimeScale (Scroll & Zoom) - Use Logical Range for better stability
+    chart.timeScale().subscribeVisibleLogicalRangeChange(range => {
+      if (isSyncingHorizontal || !range) return
+      
+      isSyncingHorizontal = true
+      charts.forEach(otherChart => {
+        if (otherChart !== chart) {
+          otherChart.timeScale().setVisibleLogicalRange(range)
+        }
+      })
+      isSyncingHorizontal = false
+    })
+
+    // 2. Sync Crosshair & Tooltip
+    chart.subscribeCrosshairMove(param => {
+      // Clear existing timer on any move
+      if (hoverTimer) {
+        clearTimeout(hoverTimer)
+        hoverTimer = null
+      }
+
+      if (isSyncingHorizontal) return
+      
+      if (param.time) {
+        // Sync vertical line
+        charts.forEach(otherChart => {
+          if (otherChart !== chart) {
+            otherChart.setCrosshairPosition(undefined, param.time, undefined)
+          }
+        })
+
+        // Find data for tooltip
+        const data = param.seriesData.get(candlestickSeries)
+        const volData = param.seriesData.get(volumeSeries)
+        
+        if (data) {
+          // Set up a timer to show the legend after HOVER_DELAY
+          hoverTimer = setTimeout(() => {
+            hoverData.value = {
+              time: formatChartTime(param.time),
+              open: data.open,
+              high: data.high,
+              low: data.low,
+              close: data.close,
+              volume: volData ? volData.value : null
+            }
+            showLegend.value = true
+          }, HOVER_DELAY)
+        } else {
+          showLegend.value = false
+        }
+      } else {
+        // Clear crosshair and hide legend
+        showLegend.value = false
+        charts.forEach(otherChart => {
+          if (otherChart !== chart) {
+            otherChart.clearCrosshairPosition()
+          }
+        })
+      }
+    })
+  })
 
   // Setup resize observer
   setupResizeObserver()
@@ -667,16 +819,26 @@ watch(() => period.value, (newPeriod, oldPeriod) => {
 .chart-container {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0;
   margin-bottom: 20px;
+  background-color: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .main-chart,
 .volume-chart,
 .rsi-chart,
 .macd-chart {
-  border: 1px solid #333;
-  border-radius: 4px;
+  border-bottom: 1px solid #2B2B43;
+}
+
+.main-chart:last-child,
+.volume-chart:last-child,
+.rsi-chart:last-child,
+.macd-chart:last-child {
+  border-bottom: none;
 }
 
 .indicators-panel {
@@ -755,5 +917,41 @@ watch(() => period.value, (newPeriod, oldPeriod) => {
 
 .down {
   color: #26a69a;
+}
+
+.chart-legend {
+  padding: 8px 12px;
+  background-color: rgba(30, 30, 30, 0.85);
+  border: 1px solid #444;
+  border-radius: 4px;
+  color: #ddd;
+  font-size: 0.85rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  min-width: 180px;
+  backdrop-filter: blur(4px);
+}
+
+.legend-time {
+  font-weight: bold;
+  border-bottom: 1px solid #444;
+  margin-bottom: 4px;
+  padding-bottom: 2px;
+  font-family: monospace;
+}
+
+.legend-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  line-height: 1.6;
+}
+
+.legend-row .label {
+  color: #888;
+}
+
+.legend-row .value {
+  margin-right: 5px;
+  font-family: 'Roboto Mono', monospace;
 }
 </style>

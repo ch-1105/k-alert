@@ -311,12 +311,25 @@ def get_kline_enhanced(stock_code: str, period: str = "daily", stock_type: str =
         # For daily data: use YYYY-MM-DD strings
         if 'time' in df.columns:
             if not pd.api.types.is_datetime64_any_dtype(df['time']):
+                # AkShare strings like "2023-12-24 14:00" are Beijing Time
                 df['time'] = pd.to_datetime(df['time'])
             
             if period in ['1', '5', '15', '30', '60']:
                 # Convert to Unix timestamp (seconds) for intraday data
-                df['time'] = (df['time'].astype('int64') / 10**9).astype('int64')
-                print(f"[DEBUG] Converted to Unix timestamps for minute data. First: {df.iloc[0]['time']}")
+                # Force localizing to Asia/Shanghai then converting to UTC to get true Unix timestamps
+                try:
+                    if df['time'].dt.tz is None:
+                        df['time'] = df['time'].dt.tz_localize('Asia/Shanghai')
+                    else:
+                        df['time'] = df['time'].dt.tz_convert('Asia/Shanghai')
+                    
+                    # Convert to Unix timestamp (seconds)
+                    df['time'] = (df['time'].astype('int64') / 10**9).astype('int64')
+                    print(f"[DEBUG] Correctly localized to Shanghai. First: {df.iloc[0]['time']}")
+                except Exception as e:
+                    print(f"[ERROR] Time localization failed: {e}")
+                    # Fallback to naive conversion if localization fails
+                    df['time'] = (df['time'].astype('int64') / 10**9).astype('int64')
             else:
                 # Use YYYY-MM-DD string for daily/weekly/monthly
                 df['time'] = df['time'].dt.strftime('%Y-%m-%d')
