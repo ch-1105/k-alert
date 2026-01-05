@@ -9,6 +9,9 @@ class TPlusOneRsiStrategy(Strategy):
     rsi_upper = 70
     rsi_window = 14
     
+    last_exit_bar = -100
+    cooldown_bars = 5
+
     def init(self):
         # Calculate RSI
         # self.data.Close is a numpy array. We convert to Series for pandas_ta
@@ -18,22 +21,22 @@ class TPlusOneRsiStrategy(Strategy):
     def next(self):
         # T+1 Validation and Sell Logic
         # In China A-shares, you cannot sell on the same day you bought (T+1).
-        # self.trades contains active trades.
-        # trade.entry_bar is the index of the bar where the trade was entered.
-        # len(self.data) - 1 is the current bar index.
-        # So we simply check if current_index > entry_index.
-        
         for trade in self.trades:
             if len(self.data) - 1 > trade.entry_bar:
                 # Sell signal
                 if self.rsi[-1] > self.rsi_upper:
                     trade.close()
+                    self.last_exit_bar = len(self.data) - 1
         
         # Buy Logic
         # Simple strategy: If no position, buy when RSI < Lower
+        # Constraint 1: Single position (handled by if not self.position)
+        # Constraint 2: Cooldown period (to avoid whipsaws)
         if not self.position:
-            if self.rsi[-1] < self.rsi_lower:
-                self.buy()
+            # Check cooldown
+            if (len(self.data) - 1 - self.last_exit_bar) > self.cooldown_bars:
+                if self.rsi[-1] < self.rsi_lower:
+                    self.buy()
 
 class BacktestService:
     @staticmethod
@@ -58,10 +61,15 @@ class BacktestService:
         df = df.copy()
         
         # Handle date index
+        # Handle date index - handle various AkShare column names
         if '日期' in df.columns:
             df['Date'] = pd.to_datetime(df['日期'])
         elif 'date' in df.columns:
             df['Date'] = pd.to_datetime(df['date'])
+        elif 'day' in df.columns:
+            df['Date'] = pd.to_datetime(df['day'])
+        elif '时间' in df.columns:
+            df['Date'] = pd.to_datetime(df['时间'])
         else:
             # If index is already datetime? AkShare usually returns RangeIndex with a date col.
             pass

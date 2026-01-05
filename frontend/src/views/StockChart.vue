@@ -63,48 +63,6 @@
     </div>
 
     <div class="indicators-panel">
-      <el-card>
-        <template #header>
-          <span>技术指标</span>
-        </template>
-        <div class="indicator-grid">
-          <div class="indicator-item">
-            <span class="label">RSI(14)</span>
-            <span class="value" :class="getRsiClass(currentIndicators.rsi)">
-              {{ currentIndicators.rsi ? currentIndicators.rsi.toFixed(2) : '--' }}
-            </span>
-          </div>
-          <div class="indicator-item">
-            <span class="label">MA5</span>
-            <span class="value">{{ currentIndicators.ma5 ? currentIndicators.ma5.toFixed(2) : '--' }}</span>
-          </div>
-          <div class="indicator-item">
-            <span class="label">MA10</span>
-            <span class="value">{{ currentIndicators.ma10 ? currentIndicators.ma10.toFixed(2) : '--' }}</span>
-          </div>
-          <div class="indicator-item">
-            <span class="label">MA20</span>
-            <span class="value">{{ currentIndicators.ma20 ? currentIndicators.ma20.toFixed(2) : '--' }}</span>
-          </div>
-          <div class="indicator-item">
-            <span class="label">MA60</span>
-            <span class="value">{{ currentIndicators.ma60 ? currentIndicators.ma60.toFixed(2) : '--' }}</span>
-          </div>
-          <div class="indicator-item">
-            <span class="label">BOLL上轨</span>
-            <span class="value">{{ currentIndicators.boll_upper ? currentIndicators.boll_upper.toFixed(2) : '--' }}</span>
-          </div>
-          <div class="indicator-item">
-            <span class="label">BOLL中轨</span>
-            <span class="value">{{ currentIndicators.boll_mid ? currentIndicators.boll_mid.toFixed(2) : '--' }}</span>
-          </div>
-          <div class="indicator-item">
-            <span class="label">BOLL下轨</span>
-            <span class="value">{{ currentIndicators.boll_lower ? currentIndicators.boll_lower.toFixed(2) : '--' }}</span>
-          </div>
-        </div>
-      </el-card>
-
       <el-card style="margin-top: 20px;">
         <template #header>
           <div style="display: flex; justify-content: space-between; align-items: center;">

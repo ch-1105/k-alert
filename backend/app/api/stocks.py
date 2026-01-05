@@ -430,7 +430,13 @@ def get_kline_enhanced(stock_code: str, period: str = "daily", stock_type: str =
             response['volume'] = volume_data
             
             # Calculate markers (buy/sell signals)
+            # Logic: Only show Buy if not currently holding (Swing strategy)
+            # Added Cooldown: Don't buy again immediately after selling to avoid whipsaws
             markers = []
+            holding = False
+            last_action_index = -100
+            COOLDOWN_BARS = 5
+            
             for i in range(len(df)):
                 if i < 14 or i >= len(rsi_series): 
                     continue
@@ -440,7 +446,8 @@ def get_kline_enhanced(stock_code: str, period: str = "daily", stock_type: str =
                 
                 if pd.isna(rsi_val): continue
                 
-                if rsi_val < 30:
+                # Buy Signal: RSI < 30 AND Not Holding AND Cooldown passed
+                if rsi_val < 30 and not holding and (i - last_action_index > COOLDOWN_BARS):
                     markers.append({
                         "time": row_time,
                         "position": "belowBar",
@@ -448,7 +455,11 @@ def get_kline_enhanced(stock_code: str, period: str = "daily", stock_type: str =
                         "shape": "circle",
                         "text": f"B:{int(rsi_val)}"
                     })
-                elif rsi_val > 70:
+                    holding = True
+                    last_action_index = i
+                    
+                # Sell Signal: RSI > 70 AND Holding
+                elif rsi_val > 70 and holding:
                     markers.append({
                         "time": row_time,
                         "position": "aboveBar",
@@ -456,8 +467,11 @@ def get_kline_enhanced(stock_code: str, period: str = "daily", stock_type: str =
                         "shape": "circle",
                         "text": f"S:{int(rsi_val)}"
                     })
+                    holding = False
+                    last_action_index = i
             
             response['markers'] = markers
+
             
         except Exception as e:
             # If indicator calculation fails, still return basic kline
